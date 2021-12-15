@@ -1,45 +1,78 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:passworld/screens/AskPin.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passworld/screens/Intropage.dart';
 import 'package:passworld/screens/PassWindow.dart';
 
-void main() {
-  runApp(MaterialApp(
-    home: Passworld(),
-    theme: ThemeData(
-      backgroundColor: Color(0xFFFFFFFF),
-      primaryColor: Colors.purple,
-    ),
-    debugShowCheckedModeBanner: false,
-  ));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(Phoenix(child: PassworldApp()));
 }
 
-class Passworld extends StatefulWidget {
+class PassworldApp extends StatefulWidget {
   @override
-  _PassworldState createState() => _PassworldState();
+  _PassworldAppState createState() => _PassworldAppState();
 }
 
-class _PassworldState extends State<Passworld> {
-  int window = 0;
-  void changeState() {
-    setState(() {
-      window = (window + 1) % 3;
-    });
+class _PassworldAppState extends State<PassworldApp> {
+  bool authorised = false;
+  Map<String, String> mainValue;
+
+  @override
+  void initState() {
+    super.initState();
+    isAuthenticated();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    FirebaseAuth.instance.signOut();
+  }
+
+  Future<void> isAuthenticated() async {
+    final storage = new FlutterSecureStorage();
+    mainValue = await storage.readAll();
+    await dotenv.load(fileName: '.env');
+    if (mainValue['email'] != null) {
+      setState(() {
+        authorised = true;
+      });
+    }
+    return;
+  }
+
+  VoidCallback authenticate(status) {
+    print("AUTHENTICATE!");
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    return Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          tooltip: 'Add Password',
-          child: Icon(Icons.add),
-        ),
-        body: window == 0
-            ? IntroPage(size: size, update: changeState)
-            : window == 1
-                ? AskPin(size: size, update: changeState)
-                : PassWindow());
+    precacheImage(AssetImage('assets/images/confused.jpg'), context);
+    precacheImage(AssetImage('assets/images/empty.jpg'), context);
+    precacheImage(AssetImage('assets/images/askpin.jpg'), context);
+    precacheImage(AssetImage('assets/images/check.png'), context);
+    precacheImage(AssetImage('assets/images/pin-code.png'), context);
+    return MaterialApp(
+      initialRoute: '/',
+      routes: {
+        '/': (context) => authorised
+            ? AskPin(authorised, authenticate, mainValue['email'])
+            : IntroPage(),
+        '/home': (context) =>
+            authorised ? PassWindow() : Navigator.pushNamed(context, '/'),
+      },
+      theme: ThemeData(
+        backgroundColor: Colors.white70,
+        primaryColor: Colors.purple,
+      ),
+      debugShowCheckedModeBanner: false,
+    );
   }
 }

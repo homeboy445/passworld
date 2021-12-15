@@ -4,11 +4,12 @@ class RoundedButton extends StatelessWidget {
   final String text;
   final Color primaryColor, textColor;
   final Function function;
+
   RoundedButton(
       {@required this.text,
       @required this.primaryColor,
       @required this.textColor,
-      this.function});
+      @required this.function});
 
   @override
   Widget build(BuildContext context) {

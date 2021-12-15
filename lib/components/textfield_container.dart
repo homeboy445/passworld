@@ -6,12 +6,14 @@ class TextFieldContainer extends StatelessWidget {
   final Icon icon;
   final bool isObscure;
   final Function function;
+  final TextInputType keyboardType;
 
   TextFieldContainer(
       {@required this.text,
       @required this.icon,
-      this.isObscure,
-      @required this.function});
+      @required this.isObscure,
+      @required this.function,
+      this.keyboardType});
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +28,14 @@ class TextFieldContainer extends StatelessWidget {
           onChanged: (value) {
             function(value);
           },
+          keyboardType: this.keyboardType == null
+              ? TextInputType.text
+              : this.keyboardType,
           obscureText: isObscure,
           decoration: InputDecoration(
               icon: icon, hintText: text, border: InputBorder.none),
         ));
   }
 }
+
+class KeyboardType {}
